@@ -2,9 +2,24 @@
 import os
 
 
-# -- >> Constants << --
-TOKEN = '9277027034:AAFaanK9Tht2_e9gC26nIcR30lm33AXGb2E'
+# -- >> Env << --
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ENV_PATH = os.path.join(BASE, '.env')
+
+if os.path.exists(ENV_PATH):
+    with open(ENV_PATH, encoding='utf-8-sig') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, val = line.split('=', 1)
+                os.environ.setdefault(key.strip(), val.strip().strip('"\''))
+
+
+# -- >> Constants << --
+TOKEN = os.getenv('BOT_TOKEN')
+if not TOKEN:
+    raise ValueError('BOT_TOKEN not found in .env file')
+
 USERS = os.path.join(BASE, 'users.json')
 TEMP = os.path.join(BASE, 'temp')
 HISTORY = os.path.join(BASE, 'history')
