@@ -118,6 +118,13 @@ class Keyboard:
         ])
 
     @staticmethod
+    def after_pack():
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text='📦 Собрать ещё', callback_data='pack')],
+            [InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')]
+        ])
+
+    @staticmethod
     def tariffs(resume=False):
         rows = [
             [InlineKeyboardButton(text='⭐️ Тариф Pro', callback_data='select_pro')]

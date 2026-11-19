@@ -3,7 +3,7 @@ import os
 from aiogram import F, Router
 from aiogram.types import FSInputFile, Message
 
-from modules.config import TEMP, CODE_EXT, IMG_EXT, IMG_MENU, IMG_TARIFFS, drafts, titles
+from modules.config import TEMP, CODE_EXT, IMG_EXT, IMG_TARIFFS, drafts, titles
 from modules.packer import Attachment, Code, Image, Packer
 from modules.storage import profile, cleanup
 from modules.keyboards import Flow, Keyboard
@@ -199,11 +199,10 @@ async def archive(cb):
     store(u, title, out)
     caption = '📦 *Готово!*' if u.pro else f'📦 *Готово!* {u.status()}'
     await cb.message.delete()
-    await cb.message.answer_document(FSInputFile(out), caption=caption)
+    await cb.message.answer_document(FSInputFile(out), caption=caption, reply_markup=Keyboard.after_pack())
     if os.path.exists(out):
         os.remove(out)
     cleanup(uid)
-    await render(cb.message, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
 @router.callback_query(F.data == 'make_doc')
@@ -229,8 +228,7 @@ async def report(cb):
     out = packer.word()
     store(u, title, out)
     await cb.message.delete()
-    await cb.message.answer_document(FSInputFile(out), caption=Text.DONE)
+    await cb.message.answer_document(FSInputFile(out), caption=Text.DONE, reply_markup=Keyboard.after_pack())
     if os.path.exists(out):
         os.remove(out)
     cleanup(uid)
-    await render(cb.message, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
