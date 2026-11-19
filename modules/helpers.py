@@ -2,6 +2,7 @@
 import os
 import time
 import shutil
+import asyncio
 from datetime import datetime, timedelta
 from aiogram.types import Message, FSInputFile, InputMediaPhoto
 
@@ -14,6 +15,8 @@ from modules.texts import Text
 # -- >> Variables << --
 msgs = {}
 cache = {}
+locks = {}
+pending = {}
 
 
 # -- >> Functions << --
@@ -29,9 +32,8 @@ async def render(target, text, markup=None, photo=None):
             sent = await target.answer_photo(media(photo), caption=text, reply_markup=markup)
             if sent.photo:
                 cache[photo] = sent.photo[-1].file_id
-        else:
-            await target.answer(text, reply_markup=markup)
-        return
+            return sent
+        return await target.answer(text, reply_markup=markup)
 
     msg = target.message
     if ok:
@@ -40,20 +42,20 @@ async def render(target, text, markup=None, photo=None):
             edited = await msg.edit_media(media=content, reply_markup=markup)
             if isinstance(edited, Message) and edited.photo:
                 cache[photo] = edited.photo[-1].file_id
-        else:
-            await msg.delete()
-            sent = await msg.answer_photo(media(photo), caption=text, reply_markup=markup)
-            if sent.photo:
-                cache[photo] = sent.photo[-1].file_id
-    else:
-        if msg.photo:
-            await msg.delete()
-            await msg.answer(text, reply_markup=markup)
-        elif msg.text:
-            await msg.edit_text(text, reply_markup=markup)
-        else:
-            await msg.edit_reply_markup(reply_markup=None)
-            await msg.answer(text, reply_markup=markup)
+            return edited
+        await msg.delete()
+        sent = await msg.answer_photo(media(photo), caption=text, reply_markup=markup)
+        if sent.photo:
+            cache[photo] = sent.photo[-1].file_id
+        return sent
+
+    if msg.photo:
+        await msg.delete()
+        return await msg.answer(text, reply_markup=markup)
+    if msg.text:
+        return await msg.edit_text(text, reply_markup=markup)
+    await msg.edit_reply_markup(reply_markup=None)
+    return await msg.answer(text, reply_markup=markup)
 
 
 def upgrade(uid, days=30):
@@ -91,15 +93,26 @@ def listing(uid):
 
 
 async def sync(msg, bot, uid):
-    items = drafts.get(uid, [])
-    text = listing(uid)
-    markup = Keyboard.collect(has_items=bool(items))
-    mid = msgs.get(uid)
-    if mid:
-        try:
-            await bot.edit_message_text(text, chat_id=msg.chat.id, message_id=mid, reply_markup=markup)
+    ver = pending.get(uid, 0) + 1
+    pending[uid] = ver
+    await asyncio.sleep(0.35)
+    if pending.get(uid) != ver:
+        return
+
+    lock = locks.setdefault(uid, asyncio.Lock())
+    async with lock:
+        if pending.get(uid) != ver:
             return
-        except Exception:
-            pass
-    sent = await msg.answer(text, reply_markup=markup)
-    msgs[uid] = sent.message_id
+        items = drafts.get(uid, [])
+        text = listing(uid)
+        markup = Keyboard.collect(has_items=bool(items))
+        mid = msgs.get(uid)
+        if mid:
+            try:
+                await bot.edit_message_text(text, chat_id=msg.chat.id, message_id=mid, reply_markup=markup)
+                return
+            except Exception as e:
+                if 'message is not modified' in str(e).lower():
+                    return
+        sent = await msg.answer(text, reply_markup=markup)
+        msgs[uid] = sent.message_id

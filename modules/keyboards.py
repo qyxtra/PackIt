@@ -43,11 +43,13 @@ class Keyboard:
         ])
 
     @staticmethod
-    def settings(current_tpl):
+    def settings(u):
         rows = []
         for code, label, tpl in NAME_PRESETS:
-            mark = '✅ ' if tpl == current_tpl else ''
+            mark = '✅ ' if tpl == u.name_tpl else ''
             rows.append([InlineKeyboardButton(text=f'{mark}{label}', callback_data=f'tpl_{code}')])
+        readme_btn = '📄 README.txt в ZIP: Вкл ✅' if u.readme else '📄 README.txt в ZIP: Выкл ❌'
+        rows.append([InlineKeyboardButton(text=readme_btn, callback_data='toggle_readme')])
         rows.append([InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')])
         return InlineKeyboardMarkup(inline_keyboard=rows)
 

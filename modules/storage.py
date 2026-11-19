@@ -20,7 +20,8 @@ class Student:
         invited=0,
         ref_by=None,
         last_dice=0,
-        name_tpl='{name}_{group}_{subject}'
+        name_tpl='{name}_{group}_{subject}',
+        readme=True
     ):
         self.uid = uid
         self.name = name
@@ -34,6 +35,7 @@ class Student:
         self.ref_by = ref_by
         self.last_dice = last_dice
         self.name_tpl = name_tpl
+        self.readme = readme
 
     def registered(self):
         return bool(self.name and self.group)
@@ -88,7 +90,8 @@ class Student:
             'invited': self.invited,
             'ref_by': self.ref_by,
             'last_dice': self.last_dice,
-            'name_tpl': self.name_tpl
+            'name_tpl': self.name_tpl,
+            'readme': self.readme
         }
 
 
@@ -114,7 +117,8 @@ class Storage:
                 data.get('invited', 0),
                 data.get('ref_by'),
                 data.get('last_dice', 0),
-                data.get('name_tpl', '{name}_{group}_{subject}')
+                data.get('name_tpl', '{name}_{group}_{subject}'),
+                data.get('readme', True)
             )
 
     @classmethod

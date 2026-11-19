@@ -47,11 +47,13 @@ class Text:
     @staticmethod
     def settings(u):
         example = f'{u.filename("Python_ПЗ_4")}.zip'
+        readme_state = 'Включён' if u.readme else 'Выключен'
         return (
             f'⚙️ *Настройки сборки:*\n\n'
             f'📝 *Текущий пример имени файла:*\n'
-            f'`{example}`\n\n'
-            f'👇 Выберите формат названия итогового архива и отчёта:'
+            f'`{example}`\n'
+            f'📄 *Добавлять README.txt в ZIP:* *{readme_state}*\n\n'
+            f'👇 Настройте параметры сборки:'
         )
 
     @staticmethod

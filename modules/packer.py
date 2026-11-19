@@ -56,7 +56,8 @@ class Packer:
             for i, item in enumerate(self.items, 1):
                 z.write(item.path, arcname=f'{i:02d}_{item.title}')
                 lines.append(f'{i}. {item.info()}')
-            z.writestr('README.txt', '\n'.join(lines))
+            if self.student.readme:
+                z.writestr('README.txt', '\n'.join(lines))
         return name
 
     def word(self):

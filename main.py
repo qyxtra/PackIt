@@ -99,7 +99,7 @@ async def menu(cb, state):
 @router.callback_query(F.data == 'settings')
 async def preferences(cb):
     u = profile(cb.from_user.id)
-    await render(cb, Text.settings(u), Keyboard.settings(u.name_tpl), photo=IMG_SETTINGS)
+    await render(cb, Text.settings(u), Keyboard.settings(u), photo=IMG_SETTINGS)
 
 
 @router.callback_query(F.data.startswith('tpl_'))
@@ -116,7 +116,17 @@ async def template(cb):
     u.name_tpl = preset
     Storage.save()
     await cb.answer('✅ Формат названия сохранён')
-    await render(cb, Text.settings(u), Keyboard.settings(u.name_tpl), photo=IMG_SETTINGS)
+    await render(cb, Text.settings(u), Keyboard.settings(u), photo=IMG_SETTINGS)
+
+
+@router.callback_query(F.data == 'toggle_readme')
+async def toggle_readme(cb):
+    u = profile(cb.from_user.id)
+    u.readme = not u.readme
+    Storage.save()
+    state_text = 'включено' if u.readme else 'отключено'
+    await cb.answer(f'✅ Добавление README.txt {state_text}')
+    await render(cb, Text.settings(u), Keyboard.settings(u), photo=IMG_SETTINGS)
 
 
 @router.callback_query(F.data == 'profile')

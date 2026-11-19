@@ -1,7 +1,7 @@
 # -- >> Imports << --
 import os
 from aiogram import F, Router
-from aiogram.types import FSInputFile
+from aiogram.types import FSInputFile, Message
 
 from modules.config import TEMP, CODE_EXT, IMG_EXT, IMG_TARIFFS, drafts, titles
 from modules.packer import Attachment, Code, Image, Packer
@@ -13,6 +13,7 @@ from modules.helpers import msgs, render, store, listing, sync
 
 # -- >> Init << --
 router = Router()
+counters = {}
 
 
 # -- >> Handlers << --
@@ -24,15 +25,19 @@ async def collect(cb, state):
         await render(cb, Text.LIMIT, Keyboard.tariffs(), photo=IMG_TARIFFS)
         return
     cleanup(uid)
+    counters[uid] = 0
     msgs.pop(uid, None)
     await state.set_state(Flow.files)
-    await render(cb, Text.FILES, Keyboard.collect())
+    sent = await render(cb, Text.FILES, Keyboard.collect())
+    if isinstance(sent, Message):
+        msgs[uid] = sent.message_id
 
 
 @router.callback_query(F.data == 'clear')
 async def reset(cb):
     uid = cb.from_user.id
     cleanup(uid)
+    counters[uid] = 0
     msgs[uid] = cb.message.message_id
     await cb.answer('🗑 Очищено')
     await render(cb, Text.CLEARED, Keyboard.collect())
@@ -52,6 +57,7 @@ async def reorder(cb):
 async def back(cb):
     uid = cb.from_user.id
     items = drafts.get(uid, [])
+    msgs[uid] = cb.message.message_id
     await render(cb, listing(uid), Keyboard.collect(has_items=bool(items)))
 
 
@@ -109,16 +115,20 @@ async def down(cb):
 async def document(msg, bot):
     uid = msg.from_user.id
     doc = msg.document
-    path = f'{TEMP}/{uid}_{doc.file_name}'
-    await bot.download(doc, destination=path)
     ext = os.path.splitext(doc.file_name)[1].lower()
     if ext in CODE_EXT:
-        item = Code(path, doc.file_name)
+        item = Code('', doc.file_name)
     elif ext in IMG_EXT:
-        item = Image(path, doc.file_name)
+        item = Image('', doc.file_name)
     else:
-        item = Attachment(path, doc.file_name)
-    drafts.setdefault(uid, []).append(item)
+        item = Attachment('', doc.file_name)
+
+    bucket = drafts.setdefault(uid, [])
+    bucket.append(item)
+    path = f'{TEMP}/{uid}_{len(bucket)}_{doc.file_name}'
+    item.path = path
+
+    await bot.download(doc, destination=path)
     await sync(msg, bot, uid)
 
 
@@ -126,11 +136,15 @@ async def document(msg, bot):
 async def photo(msg, bot):
     uid = msg.from_user.id
     pic = msg.photo[-1]
-    idx = len(drafts.get(uid, [])) + 1
+    idx = counters.get(uid, 0) + 1
+    counters[uid] = idx
     title = f'screen_{idx}.jpg'
     path = f'{TEMP}/{uid}_{title}'
+
+    item = Image(path, title)
+    drafts.setdefault(uid, []).append(item)
+
     await bot.download(pic, destination=path)
-    drafts.setdefault(uid, []).append(Image(path, title))
     await sync(msg, bot, uid)
 
 
