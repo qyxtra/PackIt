@@ -36,6 +36,15 @@ async def render(target, text, markup=None, photo=None):
         return await target.answer(text, reply_markup=markup)
 
     msg = target.message
+    if msg.document:
+        await msg.edit_reply_markup(reply_markup=None)
+        if ok:
+            sent = await msg.answer_photo(media(photo), caption=text, reply_markup=markup)
+            if sent.photo:
+                cache[photo] = sent.photo[-1].file_id
+            return sent
+        return await msg.answer(text, reply_markup=markup)
+
     if ok:
         content = InputMediaPhoto(media=media(photo), caption=text)
         if msg.photo:
