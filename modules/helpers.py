@@ -1,0 +1,105 @@
+# -- >> Imports << --
+import os
+import time
+import shutil
+from datetime import datetime, timedelta
+from aiogram.types import Message, FSInputFile, InputMediaPhoto
+
+from modules.config import HISTORY, drafts
+from modules.storage import Storage, profile
+from modules.keyboards import Keyboard
+from modules.texts import Text
+
+
+# -- >> Variables << --
+msgs = {}
+cache = {}
+
+
+# -- >> Functions << --
+def media(path):
+    return cache.get(path) or FSInputFile(path)
+
+
+async def render(target, text, markup=None, photo=None):
+    ok = bool(photo and os.path.exists(photo))
+
+    if isinstance(target, Message):
+        if ok:
+            sent = await target.answer_photo(media(photo), caption=text, reply_markup=markup)
+            if sent.photo:
+                cache[photo] = sent.photo[-1].file_id
+        else:
+            await target.answer(text, reply_markup=markup)
+        return
+
+    msg = target.message
+    if ok:
+        content = InputMediaPhoto(media=media(photo), caption=text)
+        if msg.photo:
+            edited = await msg.edit_media(media=content, reply_markup=markup)
+            if isinstance(edited, Message) and edited.photo:
+                cache[photo] = edited.photo[-1].file_id
+        else:
+            await msg.delete()
+            sent = await msg.answer_photo(media(photo), caption=text, reply_markup=markup)
+            if sent.photo:
+                cache[photo] = sent.photo[-1].file_id
+    else:
+        if msg.photo:
+            await msg.delete()
+            await msg.answer(text, reply_markup=markup)
+        elif msg.text:
+            await msg.edit_text(text, reply_markup=markup)
+        else:
+            await msg.edit_reply_markup(reply_markup=None)
+            await msg.answer(text, reply_markup=markup)
+
+
+def upgrade(uid, days=30):
+    u = profile(uid)
+    base = u.pro_until if (u.pro and u.pro_until and u.pro_until > datetime.now()) else datetime.now()
+    u.pro = True
+    u.pro_until = base + timedelta(days=days)
+    Storage.save()
+    return u
+
+
+def store(u, title, src):
+    wid = str(int(time.time() * 1000))
+    date = datetime.now().strftime('%d.%m.%Y %H:%M')
+    folder = os.path.join(HISTORY, u.prefix(), wid)
+    os.makedirs(folder, exist_ok=True)
+    dst = os.path.join(folder, os.path.basename(src))
+    shutil.copy2(src, dst)
+
+    u.history.insert(0, {'id': wid, 'title': title, 'date': date, 'path': dst})
+    for old in u.history[5:]:
+        target = os.path.dirname(old['path'])
+        if os.path.exists(target):
+            shutil.rmtree(target, ignore_errors=True)
+    u.history = u.history[:5]
+    Storage.save()
+
+
+def listing(uid):
+    items = drafts.get(uid, [])
+    if not items:
+        return Text.FILES
+    names = '\n'.join(f'{i}. `{x.title}`' for i, x in enumerate(items, 1))
+    return f"📥 *Получено файлов ({len(items)}):*\n\n{names}\n\n📎 Отправьте ещё или нажмите *'Готово'*:"
+
+
+async def sync(msg, bot, uid):
+    items = drafts.get(uid, [])
+    text = listing(uid)
+    markup = Keyboard.collect(has_items=bool(items))
+    mid = msgs.get(uid)
+    if mid:
+        try:
+            await bot.edit_message_text(text, chat_id=msg.chat.id, message_id=mid, reply_markup=markup)
+            return
+        except Exception:
+            pass
+    sent = await msg.answer(text, reply_markup=markup)
+    msgs[uid] = sent.message_id
