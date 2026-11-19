@@ -327,13 +327,19 @@ async def run():
         default=DefaultBotProperties(parse_mode='Markdown')
     )
 
-    await bot.set_my_commands([
-        BotCommand(command='start', description='🚀 Главное меню')
-    ])
-    dp = Dispatcher()
-    dp.include_routers(router, packing_router)
-    await dp.start_polling(bot)
+    try:
+        await bot.set_my_commands([
+            BotCommand(command='start', description='🚀 Главное меню')
+        ])
+        dp = Dispatcher()
+        dp.include_routers(router, packing_router)
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
 
 
 if __name__ == '__main__':
-    asyncio.run(run())
+    try:
+        asyncio.run(run())
+    except (KeyboardInterrupt, SystemExit):
+        print('\nBot stopped.')
