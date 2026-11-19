@@ -118,10 +118,8 @@ async def sync(msg, bot, uid):
         mid = msgs.get(uid)
         if mid:
             try:
-                await bot.edit_message_text(text, chat_id=msg.chat.id, message_id=mid, reply_markup=markup)
-                return
-            except Exception as e:
-                if 'message is not modified' in str(e).lower():
-                    return
+                await bot.delete_message(chat_id=msg.chat.id, message_id=mid)
+            except Exception:
+                pass
         sent = await msg.answer(text, reply_markup=markup)
         msgs[uid] = sent.message_id
