@@ -78,12 +78,10 @@ class Text:
 
     @staticmethod
     def dashboard(u):
-        safe_name = u.name.replace('_', '\\_')
         if u.is_student:
-            safe_group = u.group.replace('_', '\\_')
-            info = f'👤 *Студент:* {safe_name}\n🎓 *Группа:* {safe_group}'
+            info = f'👤 *Студент:* {u.name}\n🎓 *Группа:* {u.group}'
         else:
-            info = f'👤 *Пользователь:* {safe_name}\n💼 *Режим:* Личное использование'
+            info = f'👤 *Пользователь:* {u.name}\n💼 *Режим:* Личное использование'
         return (
             f'👋 Привет!\n\n'
             f'🆔 *ID:* `{u.uid}`\n'
@@ -93,16 +91,14 @@ class Text:
 
     @staticmethod
     def profile(u):
-        safe_name = u.name.replace('_', '\\_')
         if u.is_student:
-            safe_group = u.group.replace('_', '\\_')
             return (
                 f'👤 *Профиль студента:*\n\n'
-                f'📝 *ФИО:* {safe_name}\n'
-                f'🎓 *Группа:* {safe_group}'
+                f'📝 *ФИО:* {u.name}\n'
+                f'🎓 *Группа:* {u.group}'
             )
         return (
             f'👤 *Профиль пользователя:*\n\n'
-            f'📝 *Имя:* {safe_name}\n'
-            f'💼 *Статус:* Не студент (личное использование)'
+            f'📝 *Имя:* {u.name}\n'
+            f'💼 *Статус:* Не студент'
         )

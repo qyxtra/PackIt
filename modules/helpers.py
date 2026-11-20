@@ -69,7 +69,8 @@ async def render(target, text, markup=None, photo=None):
 
 def upgrade(uid, days=30):
     u = profile(uid)
-    base = u.pro_until if (u.pro and u.pro_until and u.pro_until > datetime.now()) else datetime.now()
+    now = datetime.now()
+    base = u.pro_until if (u.pro and u.pro_until and u.pro_until > now) else now
     u.pro = True
     u.pro_until = base + timedelta(days=days)
     Storage.save()
