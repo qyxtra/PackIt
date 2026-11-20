@@ -159,16 +159,23 @@ async def subject(cb, state):
     await render(cb, Text.SUBJECT, Keyboard.subject())
 
 
-@router.callback_query(Flow.subject, F.data == 'skip_subject')
-async def default(cb, state):
-    titles[cb.from_user.id] = 'Работа'
+@router.callback_query(Flow.subject, F.data == 'skip_subject_tpl')
+async def default_tpl(cb, state):
+    titles[cb.from_user.id] = ('Работа', True)
+    await state.clear()
+    await render(cb, Text.FORMAT, Keyboard.format())
+
+
+@router.callback_query(Flow.subject, F.data == 'skip_subject_raw')
+async def default_raw(cb, state):
+    titles[cb.from_user.id] = ('Работа', False)
     await state.clear()
     await render(cb, Text.FORMAT, Keyboard.format())
 
 
 @router.message(Flow.subject)
 async def choose(msg, state):
-    titles[msg.from_user.id] = msg.text.strip()
+    titles[msg.from_user.id] = (msg.text.strip(), True)
     await state.clear()
     await msg.answer(Text.FORMAT, reply_markup=Keyboard.format())
 
@@ -190,8 +197,8 @@ async def archive(cb):
         await cb.answer(Text.RESTART, show_alert=True)
         return
     await cb.answer()
-    title = titles.get(uid, 'Работа')
-    packer = Packer(u, title)
+    title, use_tpl = titles.get(uid, ('Работа', True))
+    packer = Packer(u, title, use_tpl=use_tpl)
     for item in items:
         packer.add(item)
     out = packer.zip()
@@ -221,8 +228,8 @@ async def report(cb):
         await cb.answer(Text.NO_CODE, show_alert=True)
         return
     await cb.answer()
-    title = titles.get(uid, 'Работа')
-    packer = Packer(u, title)
+    title, use_tpl = titles.get(uid, ('Работа', True))
+    packer = Packer(u, title, use_tpl=use_tpl)
     for item in items:
         packer.add(item)
     out = packer.word()

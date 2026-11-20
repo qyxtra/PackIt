@@ -179,7 +179,8 @@ class Keyboard:
     @staticmethod
     def subject():
         return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⏭ Пропустить (назвать 'Работа')", callback_data='skip_subject')],
+            [InlineKeyboardButton(text='⏭ Пропустить (по шаблону)', callback_data='skip_subject_tpl')],
+            [InlineKeyboardButton(text="📄 Назвать просто 'Работа'", callback_data='skip_subject_raw')],
             [InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')]
         ])
 

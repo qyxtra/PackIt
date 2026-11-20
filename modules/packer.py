@@ -35,16 +35,20 @@ class Image(Attachment):
 
 
 class Packer:
-    def __init__(self, student, subject):
+    def __init__(self, student, subject, use_tpl=True):
         self.student = student
         self.subject = subject.replace(' ', '_').replace(',', '')
+        self.use_tpl = use_tpl
         self.items = []
 
     def add(self, item):
         self.items.append(item)
 
+    def _base_name(self):
+        return self.student.filename(self.subject) if self.use_tpl else self.subject
+
     def zip(self):
-        name = f'{self.student.filename(self.subject)}.zip'
+        name = f'{self._base_name()}.zip'
         if self.student.is_student:
             lines = [
                 f'Студент, {self.student.name}',
@@ -69,7 +73,7 @@ class Packer:
         return name
 
     def word(self):
-        name = f'{self.student.filename(self.subject)}.docx'
+        name = f'{self._base_name()}.docx'
         doc = Document()
         doc.add_heading('ОТЧЕТ ПО РАБОТЕ' if not self.student.is_student else 'ОТЧЕТ ПО ПРАКТИЧЕСКОЙ РАБОТЕ', 0)
         p = doc.add_paragraph()
