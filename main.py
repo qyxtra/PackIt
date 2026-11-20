@@ -46,14 +46,28 @@ async def start(msg, state):
 
     if not u.registered():
         await state.set_state(Flow.reg_name)
-        await msg.answer(Text.REG_NAME, reply_markup=Keyboard.skip('skip_name'))
+        await msg.answer(Text.REG_NAME, reply_markup=Keyboard.reg_name())
         return
     await render(msg, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
+
+
+@router.callback_query(Flow.reg_name, F.data == 'not_student')
+async def not_student(cb, state):
+    u = profile(cb.from_user.id)
+    u.is_student = False
+    u.name = cb.from_user.first_name or 'Пользователь'
+    u.group = '-'
+    u.name_tpl = '{subject}'
+    Storage.save()
+    await state.clear()
+    await cb.answer('✅ Выбран режим личного использования')
+    await render(cb, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
 @router.callback_query(Flow.reg_name, F.data == 'skip_name')
 async def bypass(cb, state):
     u = profile(cb.from_user.id)
+    u.is_student = True
     u.name = 'Студент'
     Storage.save()
     await state.set_state(Flow.reg_group)
@@ -63,6 +77,7 @@ async def bypass(cb, state):
 @router.message(Flow.reg_name)
 async def enroll(msg, state):
     u = profile(msg.from_user.id)
+    u.is_student = True
     u.name = msg.text.strip()
     Storage.save()
     await state.set_state(Flow.reg_group)
@@ -73,6 +88,8 @@ async def enroll(msg, state):
 async def omit(cb, state):
     u = profile(cb.from_user.id)
     u.group = 'Группа'
+    if u.name_tpl == '{subject}':
+        u.name_tpl = '{name}_{group}_{subject}'
     Storage.save()
     await state.clear()
     await render(cb, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
@@ -82,6 +99,8 @@ async def omit(cb, state):
 async def assign(msg, state):
     u = profile(msg.from_user.id)
     u.group = msg.text.strip()
+    if u.name_tpl == '{subject}':
+        u.name_tpl = '{name}_{group}_{subject}'
     Storage.save()
     await state.clear()
     await render(msg, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
@@ -100,6 +119,17 @@ async def menu(cb, state):
 async def preferences(cb):
     u = profile(cb.from_user.id)
     await render(cb, Text.settings(u), Keyboard.settings(u), photo=IMG_SETTINGS)
+
+
+@router.callback_query(F.data == 're_register')
+async def re_register(cb):
+    await render(cb, Text.REREG_CONFIRM, Keyboard.confirm_rereg())
+
+
+@router.callback_query(F.data == 'confirm_rereg')
+async def confirm_rereg(cb, state):
+    await state.set_state(Flow.reg_name)
+    await render(cb, Text.REG_NAME, Keyboard.reg_name())
 
 
 @router.callback_query(F.data.startswith('tpl_'))
@@ -132,7 +162,7 @@ async def toggle_readme(cb):
 @router.callback_query(F.data == 'profile')
 async def settings(cb):
     u = profile(cb.from_user.id)
-    await render(cb, Text.profile(u), Keyboard.profile(), photo=IMG_PROFILE)
+    await render(cb, Text.profile(u), Keyboard.profile(u.is_student), photo=IMG_PROFILE)
 
 
 @router.callback_query(F.data == 'history')
@@ -169,7 +199,8 @@ async def rename(msg, state):
     u.name = msg.text.strip()
     Storage.save()
     await state.clear()
-    await msg.answer(f'✅ ФИО обновлено: *{u.name}*', reply_markup=Keyboard.profile())
+    label = 'ФИО' if u.is_student else 'Имя'
+    await msg.answer(f'✅ {label} обновлено: *{u.name}*', reply_markup=Keyboard.profile(u.is_student))
 
 
 @router.callback_query(F.data == 'set_group')
@@ -184,7 +215,7 @@ async def regroup(msg, state):
     u.group = msg.text.strip()
     Storage.save()
     await state.clear()
-    await msg.answer(f'✅ Группа обновлена: *{u.group}*', reply_markup=Keyboard.profile())
+    await msg.answer(f'✅ Группа обновлена: *{u.group}*', reply_markup=Keyboard.profile(u.is_student))
 
 
 @router.callback_query(F.data == 'invite')

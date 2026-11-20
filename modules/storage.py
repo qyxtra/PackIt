@@ -21,7 +21,8 @@ class Student:
         ref_by=None,
         last_dice=0,
         name_tpl='{name}_{group}_{subject}',
-        readme=True
+        readme=True,
+        is_student=True
     ):
         self.uid = uid
         self.name = name
@@ -36,9 +37,10 @@ class Student:
         self.last_dice = last_dice
         self.name_tpl = name_tpl
         self.readme = readme
+        self.is_student = is_student
 
     def registered(self):
-        return bool(self.name and self.group)
+        return bool(self.name and (self.group or not self.is_student))
 
     def refresh(self):
         changed = False
@@ -68,14 +70,19 @@ class Student:
 
     def prefix(self):
         n = self.name.replace(' ', '_').replace('.', '')
+        if not self.is_student or not self.group or self.group == '-':
+            return n or str(self.uid)
         g = self.group.replace('/', '-')
         return f'{n}_{g}'
 
     def filename(self, subject):
         n = self.name.replace(' ', '_').replace('.', '')
-        g = self.group.replace('/', '-')
+        g = '' if (not self.is_student or self.group == '-') else self.group.replace('/', '-')
         s = subject.replace(' ', '_').replace(',', '')
-        return self.name_tpl.format(name=n, group=g, subject=s)
+        raw = self.name_tpl.format(name=n, group=g, subject=s)
+        while '__' in raw:
+            raw = raw.replace('__', '_')
+        return raw.strip('_') or s
 
     def dump(self):
         return {
@@ -91,7 +98,8 @@ class Student:
             'ref_by': self.ref_by,
             'last_dice': self.last_dice,
             'name_tpl': self.name_tpl,
-            'readme': self.readme
+            'readme': self.readme,
+            'is_student': self.is_student
         }
 
 
@@ -118,7 +126,8 @@ class Storage:
                 data.get('ref_by'),
                 data.get('last_dice', 0),
                 data.get('name_tpl', '{name}_{group}_{subject}'),
-                data.get('readme', True)
+                data.get('readme', True),
+                data.get('is_student', True)
             )
 
     @classmethod

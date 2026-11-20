@@ -45,22 +45,41 @@ class Keyboard:
     @staticmethod
     def settings(u):
         rows = []
-        for code, label, tpl in NAME_PRESETS:
+        presets = NAME_PRESETS if u.is_student else [
+            ('ns', 'Имя_Название', '{name}_{subject}'),
+            ('s', 'Только Название', '{subject}')
+        ]
+        for code, label, tpl in presets:
             mark = '✅ ' if tpl == u.name_tpl else ''
             rows.append([InlineKeyboardButton(text=f'{mark}{label}', callback_data=f'tpl_{code}')])
         readme_btn = '📄 README.txt в ZIP: Вкл ✅' if u.readme else '📄 README.txt в ZIP: Выкл ❌'
         rows.append([InlineKeyboardButton(text=readme_btn, callback_data='toggle_readme')])
+        rows.append([InlineKeyboardButton(text='🔄 Пройти регистрацию заново', callback_data='re_register')])
         rows.append([InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')])
         return InlineKeyboardMarkup(inline_keyboard=rows)
 
     @staticmethod
-    def profile():
+    def confirm_rereg():
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text='✅ Да, пройти заново', callback_data='confirm_rereg')],
+            [InlineKeyboardButton(text='🔙 Назад в настройки', callback_data='settings')]
+        ])
+
+    @staticmethod
+    def reg_name():
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text='💼 Я не студент', callback_data='not_student')],
+            [InlineKeyboardButton(text='⏭ Пропустить', callback_data='skip_name')]
+        ])
+
+    @staticmethod
+    def profile(is_student=True):
+        edit_row = [InlineKeyboardButton(text='✏️ Изменить ФИО' if is_student else '✏️ Изменить имя', callback_data='set_name')]
+        if is_student:
+            edit_row.append(InlineKeyboardButton(text='🎓 Изменить группу', callback_data='set_group'))
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text='📜 История работ', callback_data='history')],
-            [
-                InlineKeyboardButton(text='✏️ Изменить ФИО', callback_data='set_name'),
-                InlineKeyboardButton(text='🎓 Изменить группу', callback_data='set_group')
-            ],
+            edit_row,
             [InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')]
         ])
 

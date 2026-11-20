@@ -45,13 +45,21 @@ class Packer:
 
     def zip(self):
         name = f'{self.student.filename(self.subject)}.zip'
-        lines = [
-            f'Студент, {self.student.name}',
-            f'Группа, {self.student.group}',
-            f'Работа, {self.subject}',
-            f"Дата, {datetime.now().strftime('%d.%m.%Y %H.%M')}",
-            '-' * 30
-        ]
+        if self.student.is_student:
+            lines = [
+                f'Студент, {self.student.name}',
+                f'Группа, {self.student.group}',
+                f'Работа, {self.subject}',
+                f"Дата, {datetime.now().strftime('%d.%m.%Y %H.%M')}",
+                '-' * 30
+            ]
+        else:
+            lines = [
+                f'Автор, {self.student.name}',
+                f'Работа, {self.subject}',
+                f"Дата, {datetime.now().strftime('%d.%m.%Y %H.%M')}",
+                '-' * 30
+            ]
         with zipfile.ZipFile(name, 'w') as z:
             for i, item in enumerate(self.items, 1):
                 z.write(item.path, arcname=f'{i:02d}_{item.title}')
@@ -63,11 +71,15 @@ class Packer:
     def word(self):
         name = f'{self.student.filename(self.subject)}.docx'
         doc = Document()
-        doc.add_heading('ОТЧЕТ ПО ПРАКТИЧЕСКОЙ РАБОТЕ', 0)
+        doc.add_heading('ОТЧЕТ ПО РАБОТЕ' if not self.student.is_student else 'ОТЧЕТ ПО ПРАКТИЧЕСКОЙ РАБОТЕ', 0)
         p = doc.add_paragraph()
-        p.add_run(f'Студент, {self.student.name}\n').bold = True
-        p.add_run(f'Группа, {self.student.group}\n').bold = True
-        p.add_run(f'Дисциплина и тема, {self.subject}\n').bold = True
+        if self.student.is_student:
+            p.add_run(f'Студент, {self.student.name}\n').bold = True
+            p.add_run(f'Группа, {self.student.group}\n').bold = True
+            p.add_run(f'Дисциплина и тема, {self.subject}\n').bold = True
+        else:
+            p.add_run(f'Автор, {self.student.name}\n').bold = True
+            p.add_run(f'Тема, {self.subject}\n').bold = True
         p.add_run(f"Дата выполнения, {datetime.now().strftime('%d.%m.%Y')}\n")
         doc.add_page_break()
 
