@@ -1,3 +1,10 @@
+# -- >> Helpers << --
+def esc(text):
+    for ch in ('_', '*', '`', '['):
+        text = str(text).replace(ch, f'\\{ch}')
+    return text
+
+
 # -- >> Classes << --
 class Text:
     REG_NAME = (
@@ -79,9 +86,9 @@ class Text:
     @staticmethod
     def dashboard(u):
         if u.is_student:
-            info = f'👤 *Студент:* {u.name}\n🎓 *Группа:* {u.group}'
+            info = f'👤 *Студент:* {esc(u.name)}\n🎓 *Группа:* {esc(u.group)}'
         else:
-            info = f'👤 *Пользователь:* {u.name}\n💼 *Режим:* Личное использование'
+            info = f'👤 *Пользователь:* {esc(u.name)}\n💼 *Режим:* Личное использование'
         return (
             f'👋 Привет!\n\n'
             f'🆔 *ID:* `{u.uid}`\n'
@@ -94,11 +101,11 @@ class Text:
         if u.is_student:
             return (
                 f'👤 *Профиль студента:*\n\n'
-                f'📝 *ФИО:* {u.name}\n'
-                f'🎓 *Группа:* {u.group}'
+                f'📝 *ФИО:* {esc(u.name)}\n'
+                f'🎓 *Группа:* {esc(u.group)}'
             )
         return (
             f'👤 *Профиль пользователя:*\n\n'
-            f'📝 *Имя:* {u.name}\n'
+            f'📝 *Имя:* {esc(u.name)}\n'
             f'💼 *Статус:* Не студент'
         )
