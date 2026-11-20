@@ -88,7 +88,7 @@ class Text:
         if u.is_student:
             info = f'👤 *Студент:* {esc(u.name)}\n🎓 *Группа:* {esc(u.group)}'
         else:
-            info = f'👤 *Пользователь:* {esc(u.name)}\n💼 *Режим:* Личное использование'
+            info = f'👤 *Пользователь:* {esc(u.name)}'
         return (
             f'👋 Привет!\n\n'
             f'🆔 *ID:* `{u.uid}`\n'
@@ -106,6 +106,5 @@ class Text:
             )
         return (
             f'👤 *Профиль пользователя:*\n\n'
-            f'📝 *Имя:* {esc(u.name)}\n'
-            f'💼 *Статус:* Не студент'
+            f'📝 *Имя:* {esc(u.name)}'
         )
