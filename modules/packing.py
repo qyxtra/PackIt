@@ -8,12 +8,13 @@ from modules.packer import Attachment, Code, Image, Packer
 from modules.storage import profile, cleanup
 from modules.keyboards import Flow, Keyboard
 from modules.texts import Text
-from modules.helpers import msgs, render, store, listing, sync
+from modules.helpers import msgs, pending, locks, render, store, listing, sync
 
 
 # -- >> Init << --
 router = Router()
 counters = {}
+seen_msgs = {}
 
 
 # -- >> Handlers << --
@@ -24,9 +25,12 @@ async def collect(cb, state):
     if not u.allowed():
         await render(cb, Text.LIMIT, Keyboard.tariffs(), photo=IMG_TARIFFS)
         return
-    cleanup(uid)
-    counters[uid] = 0
-    msgs.pop(uid, None)
+    async with locks.setdefault(uid, __import__('asyncio').Lock()):
+        pending[uid] = pending.get(uid, 0) + 1
+        cleanup(uid)
+        counters[uid] = 0
+        seen_msgs[uid] = set()
+        msgs.pop(uid, None)
     await state.set_state(Flow.files)
     sent = await render(cb, Text.FILES, Keyboard.collect())
     if isinstance(sent, Message):
@@ -36,11 +40,46 @@ async def collect(cb, state):
 @router.callback_query(F.data == 'clear')
 async def reset(cb):
     uid = cb.from_user.id
-    cleanup(uid)
-    counters[uid] = 0
-    msgs[uid] = cb.message.message_id
+    async with locks.setdefault(uid, __import__('asyncio').Lock()):
+        pending[uid] = pending.get(uid, 0) + 1
+        cleanup(uid)
+        counters[uid] = 0
+        msgs[uid] = cb.message.message_id
     await cb.answer('🗑 Очищено')
-    await render(cb, Text.CLEARED, Keyboard.collect())
+    try:
+        await render(cb, Text.CLEARED, Keyboard.collect())
+    except Exception:
+        pass
+
+
+@router.callback_query(Flow.files, F.data == 'remove_menu')
+async def remove_menu(cb):
+    uid = cb.from_user.id
+    items = drafts.get(uid, [])
+    if not items:
+        await cb.answer(Text.EMPTY, show_alert=True)
+        return
+    await render(cb, '🗑 *Удаление файла:*\nНажмите на файл, который нужно убрать из сборки:', Keyboard.remove(items))
+
+
+@router.callback_query(Flow.files, F.data.startswith('del_file_'))
+async def delete_file(cb):
+    uid = cb.from_user.id
+    items = drafts.get(uid, [])
+    idx = int(cb.data[9:])
+    if 0 <= idx < len(items):
+        removed = items.pop(idx)
+        if os.path.exists(removed.path):
+            os.remove(removed.path)
+        await cb.answer(f'❌ Удалён: {removed.title}')
+    else:
+        await cb.answer()
+
+    if not items:
+        msgs[uid] = cb.message.message_id
+        await render(cb, Text.CLEARED, Keyboard.collect())
+    else:
+        await render(cb, '🗑 *Удаление файла:*\nНажмите на файл, который нужно убрать из сборки:', Keyboard.remove(items))
 
 
 @router.callback_query(Flow.files, F.data == 'reorder')
@@ -114,6 +153,11 @@ async def down(cb):
 @router.message(Flow.files, F.document)
 async def document(msg, bot):
     uid = msg.from_user.id
+    seen = seen_msgs.setdefault(uid, set())
+    if msg.message_id in seen:
+        return
+    seen.add(msg.message_id)
+
     doc = msg.document
     ext = os.path.splitext(doc.file_name)[1].lower()
     if ext in CODE_EXT:
@@ -123,10 +167,11 @@ async def document(msg, bot):
     else:
         item = Attachment('', doc.file_name)
 
-    bucket = drafts.setdefault(uid, [])
-    bucket.append(item)
-    path = f'{TEMP}/{uid}_{len(bucket)}_{doc.file_name}'
+    idx = counters.get(uid, 0) + 1
+    counters[uid] = idx
+    path = f'{TEMP}/{uid}_{idx}_{doc.file_name}'
     item.path = path
+    drafts.setdefault(uid, []).append(item)
 
     await bot.download(doc, destination=path)
     await sync(msg, bot, uid)
@@ -135,11 +180,16 @@ async def document(msg, bot):
 @router.message(Flow.files, F.photo)
 async def photo(msg, bot):
     uid = msg.from_user.id
+    seen = seen_msgs.setdefault(uid, set())
+    if msg.message_id in seen:
+        return
+    seen.add(msg.message_id)
+
     pic = msg.photo[-1]
     idx = counters.get(uid, 0) + 1
     counters[uid] = idx
     title = f'screen_{idx}.jpg'
-    path = f'{TEMP}/{uid}_{title}'
+    path = f'{TEMP}/{uid}_{idx}_{title}'
 
     item = Image(path, title)
     drafts.setdefault(uid, []).append(item)
@@ -154,6 +204,7 @@ async def subject(cb, state):
     if not drafts.get(uid):
         await cb.answer(Text.EMPTY, show_alert=True)
         return
+    pending[uid] = pending.get(uid, 0) + 1
     msgs.pop(uid, None)
     await state.set_state(Flow.subject)
     await render(cb, Text.SUBJECT, Keyboard.subject())

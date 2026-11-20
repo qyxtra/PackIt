@@ -114,8 +114,10 @@ async def sync(msg, bot, uid):
         if pending.get(uid) != ver:
             return
         items = drafts.get(uid, [])
+        if not items:
+            return
         text = listing(uid)
-        markup = Keyboard.collect(has_items=bool(items))
+        markup = Keyboard.collect(has_items=True)
         mid = msgs.get(uid)
         if mid:
             try:

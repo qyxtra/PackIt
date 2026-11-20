@@ -99,9 +99,21 @@ class Keyboard:
             [InlineKeyboardButton(text='✅ Готово', callback_data='done')]
         ]
         if has_items:
-            rows.append([InlineKeyboardButton(text='🔀 Изменить порядок', callback_data='reorder')])
+            rows.append([
+                InlineKeyboardButton(text='🔀 Порядок', callback_data='reorder'),
+                InlineKeyboardButton(text='❌ Удалить файл', callback_data='remove_menu')
+            ])
         rows.append([InlineKeyboardButton(text='🗑 Очистить список', callback_data='clear')])
         rows.append([InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')])
+        return InlineKeyboardMarkup(inline_keyboard=rows)
+
+    @staticmethod
+    def remove(items):
+        rows = []
+        for i, item in enumerate(items):
+            name = item.title if len(item.title) <= 28 else item.title[:25] + '...'
+            rows.append([InlineKeyboardButton(text=f'❌ {i + 1}. {name}', callback_data=f'del_file_{i}')])
+        rows.append([InlineKeyboardButton(text='🔙 Назад к списку', callback_data='back_collect')])
         return InlineKeyboardMarkup(inline_keyboard=rows)
 
     @staticmethod
