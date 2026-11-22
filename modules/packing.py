@@ -59,7 +59,7 @@ async def remove_menu(cb):
     if not items:
         await cb.answer(Text.EMPTY, show_alert=True)
         return
-    await render(cb, '🗑 *Удаление файла:*\nНажмите на файл, который нужно убрать из сборки:', Keyboard.remove(items))
+    await render(cb, '🗑 *Удаление файла*\nНажмите на файл, который нужно убрать из сборки.', Keyboard.remove(items))
 
 
 @router.callback_query(Flow.files, F.data.startswith('del_file_'))
@@ -71,7 +71,7 @@ async def delete_file(cb):
         removed = items.pop(idx)
         if os.path.exists(removed.path):
             os.remove(removed.path)
-        await cb.answer(f'❌ Удалён: {removed.title}')
+        await cb.answer(f'❌ Удалён, {removed.title}')
     else:
         await cb.answer()
 
@@ -79,7 +79,7 @@ async def delete_file(cb):
         msgs[uid] = cb.message.message_id
         await render(cb, Text.CLEARED, Keyboard.collect())
     else:
-        await render(cb, '🗑 *Удаление файла:*\nНажмите на файл, который нужно убрать из сборки:', Keyboard.remove(items))
+        await render(cb, '🗑 *Удаление файла*\nНажмите на файл, который нужно убрать из сборки.', Keyboard.remove(items))
 
 
 @router.callback_query(Flow.files, F.data == 'reorder')
@@ -89,7 +89,7 @@ async def reorder(cb):
     if len(items) < 2:
         await cb.answer('⚠️ Добавьте минимум 2 файла для сортировки.', show_alert=True)
         return
-    await render(cb, '🔀 *Порядок файлов:*\nВыберите пресет или переместите файлы кнопками ⬆️ / ⬇️:', Keyboard.reorder(items))
+    await render(cb, '🔀 *Порядок файлов*\nВыберите пресет или переместите файлы кнопками ⬆️ / ⬇️.', Keyboard.reorder(items))
 
 
 @router.callback_query(Flow.files, F.data == 'back_collect')
@@ -123,7 +123,7 @@ async def preset(cb):
         items.reverse()
     await cb.answer('✅ Порядок применён')
     try:
-        await render(cb, '🔀 *Порядок файлов обновлён:*\nВыберите пресет или переместите файлы кнопками ⬆️ / ⬇️:', Keyboard.reorder(items))
+        await render(cb, '🔀 *Порядок файлов обновлён*\nВыберите пресет или переместите файлы кнопками ⬆️ / ⬇️.', Keyboard.reorder(items))
     except Exception:
         pass
 
@@ -136,7 +136,7 @@ async def up(cb):
     if 0 < idx < len(items):
         items[idx], items[idx - 1] = items[idx - 1], items[idx]
     await cb.answer()
-    await render(cb, '🔀 *Порядок файлов:*\nВыберите пресет или переместите файлы кнопками ⬆️ / ⬇️:', Keyboard.reorder(items))
+    await render(cb, '🔀 *Порядок файлов*\nВыберите пресет или переместите файлы кнопками ⬆️ / ⬇️.', Keyboard.reorder(items))
 
 
 @router.callback_query(Flow.files, F.data.startswith('move_dn_'))
@@ -147,7 +147,7 @@ async def down(cb):
     if 0 <= idx < len(items) - 1:
         items[idx], items[idx + 1] = items[idx + 1], items[idx]
     await cb.answer()
-    await render(cb, '🔀 *Порядок файлов:*\nВыберите пресет или переместите файлы кнопками ⬆️ / ⬇️:', Keyboard.reorder(items))
+    await render(cb, '🔀 *Порядок файлов*\nВыберите пресет или переместите файлы кнопками ⬆️ / ⬇️.', Keyboard.reorder(items))
 
 
 @router.message(Flow.files, F.document)
@@ -272,6 +272,11 @@ async def archive(cb):
     if os.path.exists(out):
         os.remove(out)
     cleanup(uid)
+
+
+@router.callback_query(F.data == 'make_doc_soon')
+async def report_soon(cb):
+    await cb.answer(Text.WORD_SOON, show_alert=True)
 
 
 @router.callback_query(F.data == 'make_doc')

@@ -79,7 +79,7 @@ def upgrade(uid, days=30):
 
 def store(u, title, src):
     wid = str(int(time.time() * 1000))
-    date = datetime.now().strftime('%d.%m.%Y %H:%M')
+    date = datetime.now().strftime('%d.%m.%Y %H.%M')
     folder = os.path.join(HISTORY, u.prefix(), wid)
     os.makedirs(folder, exist_ok=True)
     dst = os.path.join(folder, os.path.basename(src))
@@ -99,7 +99,7 @@ def listing(uid):
     if not items:
         return Text.FILES
     names = '\n'.join(f'{i}. `{x.title}`' for i, x in enumerate(items, 1))
-    return f"📥 *Получено файлов ({len(items)}):*\n\n{names}\n\n📎 Отправьте ещё или нажмите *'Готово'*:"
+    return f"📥 *Получено файлов ({len(items)})*\n\n{names}\n\n📎 Отправьте ещё или нажмите *'Готово'*."
 
 
 async def sync(msg, bot, uid):

@@ -171,7 +171,7 @@ async def history(cb):
     if not u.history:
         await cb.answer('📭 История работ пока пуста.', show_alert=True)
         return
-    await render(cb, f'📜 *Последние работы ({len(u.history[:5])}):*\n👇 Выберите работу для скачивания:', Keyboard.history(u.history))
+    await render(cb, f'📜 *Последние работы ({len(u.history[:5])})*\n👇 Выберите работу для скачивания.', Keyboard.history(u.history))
 
 
 @router.callback_query(F.data.startswith('hist_'))
@@ -200,7 +200,7 @@ async def rename(msg, state):
     Storage.save()
     await state.clear()
     label = 'ФИО' if u.is_student else 'Имя'
-    await msg.answer(f'✅ {label} обновлено: *{u.name}*', reply_markup=Keyboard.profile(u.is_student))
+    await msg.answer(f'✅ {label} обновлено, *{u.name}*', reply_markup=Keyboard.profile(u.is_student))
 
 
 @router.callback_query(F.data == 'set_group')
@@ -215,7 +215,7 @@ async def regroup(msg, state):
     u.group = msg.text.strip()
     Storage.save()
     await state.clear()
-    await msg.answer(f'✅ Группа обновлена: *{u.group}*', reply_markup=Keyboard.profile(u.is_student))
+    await msg.answer(f'✅ Группа обновлена, *{u.group}*', reply_markup=Keyboard.profile(u.is_student))
 
 
 @router.callback_query(F.data == 'invite')
@@ -237,10 +237,10 @@ async def dice(cb):
         return
     text = (
         '🎲 *Попытать удачу*\n\n'
-        'Бросьте кубик (раз в 24 часа):\n'
-        '🎁 Выпадет *4 или 5* - бонусная сборка (+1 к лимиту)\n'
-        '⭐️ Выпадет *6* - активация *Pro-подписки* на 30 дней\n'
-        '💨 Выпадет *1-3* - без приза'
+        'Бросьте кубик (раз в 24 часа)\n'
+        '🎁 Выпадет *4 или 5*, бонусная сборка (+1 к лимиту)\n'
+        '⭐️ Выпадет *6*, активация *подписки Pro* на 30 дней\n'
+        '💨 Выпадет *от 1 до 3*, без приза'
     )
     await render(cb, text, Keyboard.dice(), photo=IMG_DICE)
 
@@ -262,7 +262,7 @@ async def roll(cb):
 
     if val == 6:
         upgrade(uid, days=30)
-        res = f'🎉 Выпало *{val}*! Поздравляем, вы выиграли *Pro-подписку* на 30 дней! ⭐️'
+        res = f'🎉 Выпало *{val}*! Поздравляем, вы выиграли *подписку Pro* на 30 дней! ⭐️'
     elif val in (4, 5):
         u.used = max(0, u.used - 1)
         Storage.save()
@@ -317,11 +317,11 @@ async def stars(cb):
     await cb.answer()
     await cb.message.answer_invoice(
         title='⭐️ Подписка Pro (1 месяц)',
-        description='⚡️ Безлимитные сборки и автогенерация отчетов в Word (.docx) с титульным листом.',
+        description='⚡️ Безлимитные сборки работ, генерация отчетов в Word (.docx) будет добавлена позже.',
         payload='pro_monthly_stars',
         provider_token='',
         currency='XTR',
-        prices=[LabeledPrice(label='⭐️ Pro-подписка (30 дней)', amount=STARS)]
+        prices=[LabeledPrice(label='⭐️ Подписка Pro (30 дней)', amount=STARS)]
     )
 
 

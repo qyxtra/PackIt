@@ -143,10 +143,11 @@ class Keyboard:
     @staticmethod
     def format(is_pro=False):
         rows = [
-            [InlineKeyboardButton(text='📁 ZIP-архив', callback_data='make_zip')]
+            [InlineKeyboardButton(text='📁 ZIP архив', callback_data='make_zip')]
         ]
         if is_pro:
-            rows.append([InlineKeyboardButton(text='📄 Отчет Word .docx', callback_data='make_doc')])
+            strike = '\u0336'.join('Отчет Word .docx') + '\u0336'
+            rows.append([InlineKeyboardButton(text=f'📄 {strike}', callback_data='make_doc_soon')])
         rows.append([InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')])
         return InlineKeyboardMarkup(inline_keyboard=rows)
 

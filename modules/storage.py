@@ -63,10 +63,10 @@ class Student:
         self.refresh()
         if self.pro:
             if self.pro_until:
-                return f"Тариф: Pro (до {self.pro_until.strftime('%d.%m.%Y')})"
-            return 'Тариф: Pro (безлимит)'
-        date = self.reset.strftime('%d.%m.%Y %H:%M')
-        return f'Тариф: Базовый (осталось {max(0, 3 - self.used)} из 3, сброс {date})'
+                return f"Тариф Pro (до {self.pro_until.strftime('%d.%m.%Y')})"
+            return 'Тариф Pro (безлимит)'
+        date = self.reset.strftime('%d.%m.%Y %H.%M')
+        return f'Тариф Базовый (осталось {max(0, 3 - self.used)} из 3, сброс {date})'
 
     def prefix(self):
         n = self.name.replace(' ', '_').replace('.', '')
