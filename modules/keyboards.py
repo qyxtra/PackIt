@@ -24,6 +24,7 @@ class Flow(StatesGroup):
 
 
 class Keyboard:
+    # -- >> Public << --
     @staticmethod
     def main():
         return InlineKeyboardMarkup(inline_keyboard=[
@@ -52,21 +53,21 @@ class Keyboard:
         for code, label, tpl in presets:
             mark = '✅ ' if tpl == u.name_tpl else ''
             rows.append([InlineKeyboardButton(text=f'{mark}{label}', callback_data=f'tpl_{code}')])
-        readme_btn = '📄 README.txt в ZIP, Вкл ✅' if u.readme else '📄 README.txt в ZIP, Выкл ❌'
+        readme_btn = '📄 README.txt в ZIP: Вкл ✅' if u.readme else '📄 README.txt в ZIP: Выкл ❌'
         rows.append([InlineKeyboardButton(text=readme_btn, callback_data='toggle_readme')])
         rows.append([InlineKeyboardButton(text='🔄 Пройти регистрацию заново', callback_data='re_register')])
         rows.append([InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')])
         return InlineKeyboardMarkup(inline_keyboard=rows)
 
     @staticmethod
-    def confirm_rereg():
+    def confirm():
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text='✅ Да, пройти заново', callback_data='confirm_rereg')],
             [InlineKeyboardButton(text='🔙 Назад в настройки', callback_data='settings')]
         ])
 
     @staticmethod
-    def reg_name():
+    def register():
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text='💼 Я не студент', callback_data='not_student')],
             [InlineKeyboardButton(text='⏭ Пропустить', callback_data='skip_name')]
@@ -152,7 +153,7 @@ class Keyboard:
         return InlineKeyboardMarkup(inline_keyboard=rows)
 
     @staticmethod
-    def after_pack():
+    def after():
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text='📦 Собрать ещё', callback_data='pack')],
             [InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')]
@@ -194,7 +195,7 @@ class Keyboard:
         return InlineKeyboardMarkup(inline_keyboard=rows)
 
     @staticmethod
-    def ref_reward(from_invite=False):
+    def reward(from_invite=False):
         rows = [
             [InlineKeyboardButton(text='📦 +2 сборки', callback_data='claim_ref_packs')],
             [InlineKeyboardButton(text='⭐️ 3 дня подписки Pro', callback_data='claim_ref_pro')]

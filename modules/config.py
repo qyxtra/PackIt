@@ -2,7 +2,7 @@
 import os
 
 
-# -- >> Env << --
+# -- >> Constants << --
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENV_PATH = os.path.join(BASE, '.env')
 
@@ -14,8 +14,6 @@ if os.path.exists(ENV_PATH):
                 key, val = line.split('=', 1)
                 os.environ.setdefault(key.strip(), val.strip().strip('"\''))
 
-
-# -- >> Constants << --
 TOKEN = os.getenv('BOT_TOKEN')
 if not TOKEN:
     raise ValueError('BOT_TOKEN not found in .env file')
@@ -47,7 +45,5 @@ users = {}
 drafts = {}
 titles = {}
 
-
-# -- >> Init << --
 os.makedirs(TEMP, exist_ok=True)
 os.makedirs(HISTORY, exist_ok=True)

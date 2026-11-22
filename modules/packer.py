@@ -12,11 +12,13 @@ class Attachment:
         self.path = path
         self.title = title
 
+    # -- >> Public << --
     def info(self):
-        return f'Файл, {self.title}'
+        return f'Файл: {self.title}'
 
 
 class Code(Attachment):
+    # -- >> Public << --
     def text(self):
         with open(self.path, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
@@ -25,13 +27,14 @@ class Code(Attachment):
         return len(self.text().splitlines())
 
     def info(self):
-        return f'Код, {self.title} ({self.lines()} строк)'
+        return f'Код: {self.title} ({self.lines()} строк)'
 
 
 class Image(Attachment):
+    # -- >> Public << --
     def info(self):
         kb = round(os.path.getsize(self.path) / 1024, 1)
-        return f'Скриншот, {self.title} ({kb} КБ)'
+        return f'Скриншот: {self.title} ({kb} КБ)'
 
 
 class Packer:
@@ -41,27 +44,29 @@ class Packer:
         self.use_tpl = use_tpl
         self.items = []
 
+    # -- >> Private << --
+    def base(self):
+        return self.student.filename(self.subject) if self.use_tpl else self.subject
+
+    # -- >> Public << --
     def add(self, item):
         self.items.append(item)
 
-    def _base_name(self):
-        return self.student.filename(self.subject) if self.use_tpl else self.subject
-
     def zip(self):
-        name = f'{self._base_name()}.zip'
+        name = f'{self.base()}.zip'
         if self.student.is_student:
             lines = [
-                f'Студент, {self.student.name}',
-                f'Группа, {self.student.group}',
-                f'Работа, {self.subject}',
-                f"Дата, {datetime.now().strftime('%d.%m.%Y %H.%M')}",
+                f'Студент: {self.student.name}',
+                f'Группа: {self.student.group}',
+                f'Работа: {self.subject}',
+                f"Дата: {datetime.now().strftime('%d.%m.%Y %H:%M')}",
                 '-' * 30
             ]
         else:
             lines = [
-                f'Автор, {self.student.name}',
-                f'Работа, {self.subject}',
-                f"Дата, {datetime.now().strftime('%d.%m.%Y %H.%M')}",
+                f'Автор: {self.student.name}',
+                f'Работа: {self.subject}',
+                f"Дата: {datetime.now().strftime('%d.%m.%Y %H:%M')}",
                 '-' * 30
             ]
         with zipfile.ZipFile(name, 'w') as z:
@@ -73,18 +78,18 @@ class Packer:
         return name
 
     def word(self):
-        name = f'{self._base_name()}.docx'
+        name = f'{self.base()}.docx'
         doc = Document()
         doc.add_heading('ОТЧЕТ ПО РАБОТЕ' if not self.student.is_student else 'ОТЧЕТ ПО ПРАКТИЧЕСКОЙ РАБОТЕ', 0)
         p = doc.add_paragraph()
         if self.student.is_student:
-            p.add_run(f'Студент, {self.student.name}\n').bold = True
-            p.add_run(f'Группа, {self.student.group}\n').bold = True
-            p.add_run(f'Дисциплина и тема, {self.subject}\n').bold = True
+            p.add_run(f'Студент: {self.student.name}\n').bold = True
+            p.add_run(f'Группа: {self.student.group}\n').bold = True
+            p.add_run(f'Дисциплина и тема: {self.subject}\n').bold = True
         else:
-            p.add_run(f'Автор, {self.student.name}\n').bold = True
-            p.add_run(f'Тема, {self.subject}\n').bold = True
-        p.add_run(f"Дата выполнения, {datetime.now().strftime('%d.%m.%Y')}\n")
+            p.add_run(f'Автор: {self.student.name}\n').bold = True
+            p.add_run(f'Тема: {self.subject}\n').bold = True
+        p.add_run(f"Дата выполнения: {datetime.now().strftime('%d.%m.%Y')}\n")
         doc.add_page_break()
 
         for item in self.items:

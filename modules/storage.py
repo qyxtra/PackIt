@@ -31,7 +31,7 @@ class Student:
         self.group = group
         self.pro = pro
         self.used = used
-        self.reset = datetime.fromisoformat(reset) if reset else datetime.now() + timedelta(days=7)
+        self.reset = datetime.fromisoformat(reset) if reset else datetime.now() + timedelta(days=1)
         self.pro_until = datetime.fromisoformat(pro_until) if pro_until else None
         self.history = history if history is not None else []
         self.invited = invited
@@ -43,6 +43,7 @@ class Student:
         self.readme = readme
         self.is_student = is_student
 
+    # -- >> Public << --
     def registered(self):
         return bool(self.name and (self.group or not self.is_student))
 
@@ -50,7 +51,7 @@ class Student:
         changed = False
         if datetime.now() >= self.reset:
             self.used = 0
-            self.reset = datetime.now() + timedelta(days=7)
+            self.reset = datetime.now() + timedelta(days=1)
             changed = True
         if self.pro and self.pro_until and datetime.now() >= self.pro_until:
             self.pro = False
@@ -112,6 +113,7 @@ class Student:
 class Storage:
     path = USERS
 
+    # -- >> Public << --
     @classmethod
     def load(cls):
         if not os.path.exists(cls.path):

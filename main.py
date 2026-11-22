@@ -21,13 +21,13 @@ from modules.helpers import msgs, render, upgrade
 from modules.packing import router as packing_router
 
 
-# -- >> Init << --
+# -- >> Variables << --
 router = Router()
 Storage.load()
 
 
-# -- >> Helpers << --
-async def grant_ref_reward(bot, u):
+# -- >> Private << --
+async def reward(bot, u):
     if not u.ref_by or u.ref_rewarded:
         return
     u.ref_rewarded = True
@@ -36,12 +36,12 @@ async def grant_ref_reward(bot, u):
     inviter.ref_rewards += 1
     Storage.save()
     try:
-        await bot.send_message(inviter.uid, Text.REF_NEW, reply_markup=Keyboard.ref_reward())
+        await bot.send_message(inviter.uid, Text.REF_NEW, reply_markup=Keyboard.reward())
     except Exception:
         pass
 
 
-# -- >> Handlers << --
+# -- >> Public << --
 @router.message(CommandStart())
 async def start(msg, state, bot):
     await state.clear()
@@ -58,13 +58,13 @@ async def start(msg, state, bot):
 
     if not u.registered():
         await state.set_state(Flow.reg_name)
-        await msg.answer(Text.REG_NAME, reply_markup=Keyboard.reg_name())
+        await msg.answer(Text.REG_NAME, reply_markup=Keyboard.register())
         return
     await render(msg, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
 @router.callback_query(Flow.reg_name, F.data == 'not_student')
-async def not_student(cb, state, bot):
+async def guest(cb, state, bot):
     u = profile(cb.from_user.id)
     u.is_student = False
     u.name = cb.from_user.first_name or 'Пользователь'
@@ -73,7 +73,7 @@ async def not_student(cb, state, bot):
     Storage.save()
     await state.clear()
     await cb.answer('✅ Выбран режим личного использования')
-    await grant_ref_reward(bot, u)
+    await reward(bot, u)
     await render(cb, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
@@ -105,7 +105,7 @@ async def omit(cb, state, bot):
         u.name_tpl = '{name}_{group}_{subject}'
     Storage.save()
     await state.clear()
-    await grant_ref_reward(bot, u)
+    await reward(bot, u)
     await render(cb, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
@@ -117,7 +117,7 @@ async def assign(msg, state, bot):
         u.name_tpl = '{name}_{group}_{subject}'
     Storage.save()
     await state.clear()
-    await grant_ref_reward(bot, u)
+    await reward(bot, u)
     await render(msg, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
@@ -137,14 +137,14 @@ async def preferences(cb):
 
 
 @router.callback_query(F.data == 're_register')
-async def re_register(cb):
-    await render(cb, Text.REREG_CONFIRM, Keyboard.confirm_rereg())
+async def reregister(cb):
+    await render(cb, Text.REREG_CONFIRM, Keyboard.confirm())
 
 
 @router.callback_query(F.data == 'confirm_rereg')
-async def confirm_rereg(cb, state):
+async def confirm(cb, state):
     await state.set_state(Flow.reg_name)
-    await render(cb, Text.REG_NAME, Keyboard.reg_name())
+    await render(cb, Text.REG_NAME, Keyboard.register())
 
 
 @router.callback_query(F.data.startswith('tpl_'))
@@ -165,7 +165,7 @@ async def template(cb):
 
 
 @router.callback_query(F.data == 'toggle_readme')
-async def toggle_readme(cb):
+async def readme(cb):
     u = profile(cb.from_user.id)
     u.readme = not u.readme
     Storage.save()
@@ -186,7 +186,7 @@ async def history(cb):
     if not u.history:
         await cb.answer('📭 История работ пока пуста.', show_alert=True)
         return
-    await render(cb, f'📜 *Последние работы ({len(u.history[:5])})*\n👇 Выберите работу для скачивания.', Keyboard.history(u.history))
+    await render(cb, f'📜 *Последние работы ({len(u.history[:5])}):*\n👇 Выберите работу для скачивания:', Keyboard.history(u.history))
 
 
 @router.callback_query(F.data.startswith('hist_'))
@@ -215,7 +215,7 @@ async def rename(msg, state):
     Storage.save()
     await state.clear()
     label = 'ФИО' if u.is_student else 'Имя'
-    await msg.answer(f'✅ {label} обновлено, *{u.name}*', reply_markup=Keyboard.profile(u.is_student))
+    await msg.answer(f'✅ {label} обновлено: *{u.name}*', reply_markup=Keyboard.profile(u.is_student))
 
 
 @router.callback_query(F.data == 'set_group')
@@ -230,7 +230,7 @@ async def regroup(msg, state):
     u.group = msg.text.strip()
     Storage.save()
     await state.clear()
-    await msg.answer(f'✅ Группа обновлена, *{u.group}*', reply_markup=Keyboard.profile(u.is_student))
+    await msg.answer(f'✅ Группа обновлена: *{u.group}*', reply_markup=Keyboard.profile(u.is_student))
 
 
 @router.callback_query(F.data == 'invite')
@@ -246,22 +246,22 @@ async def invite(cb, bot):
 
 
 @router.callback_query(F.data == 'ref_rewards')
-async def ref_rewards(cb):
+async def rewards(cb):
     u = profile(cb.from_user.id)
     if u.ref_rewards <= 0:
         await cb.answer(Text.REF_EMPTY, show_alert=True)
         return
-    await render(cb, Text.ref_rewards(u.ref_rewards), Keyboard.ref_reward(from_invite=True))
+    await render(cb, Text.rewards(u.ref_rewards), Keyboard.reward(from_invite=True))
 
 
 @router.callback_query(F.data == 'defer_ref_reward')
-async def defer_ref_reward(cb):
+async def defer(cb):
     await cb.answer()
     await render(cb, Text.REF_DEFERRED, Keyboard.main())
 
 
 @router.callback_query(F.data == 'claim_ref_packs')
-async def claim_ref_packs(cb):
+async def packs(cb):
     u = profile(cb.from_user.id)
     if u.ref_rewards <= 0:
         await cb.answer(Text.REF_EMPTY, show_alert=True)
@@ -271,13 +271,13 @@ async def claim_ref_packs(cb):
     Storage.save()
     await cb.answer('✅ Начислено +2 сборки!', show_alert=True)
     if u.ref_rewards > 0:
-        await render(cb, Text.ref_rewards(u.ref_rewards), Keyboard.ref_reward(from_invite=True))
+        await render(cb, Text.rewards(u.ref_rewards), Keyboard.reward(from_invite=True))
     else:
         await render(cb, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
 @router.callback_query(F.data == 'claim_ref_pro')
-async def claim_ref_pro(cb):
+async def vip(cb):
     uid = cb.from_user.id
     u = profile(uid)
     if u.ref_rewards <= 0:
@@ -287,7 +287,7 @@ async def claim_ref_pro(cb):
     upgrade(uid, days=3)
     await cb.answer('⭐️ Начислено 3 дня подписки Pro!', show_alert=True)
     if u.ref_rewards > 0:
-        await render(cb, Text.ref_rewards(u.ref_rewards), Keyboard.ref_reward(from_invite=True))
+        await render(cb, Text.rewards(u.ref_rewards), Keyboard.reward(from_invite=True))
     else:
         await render(cb, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
@@ -304,10 +304,10 @@ async def dice(cb):
         return
     text = (
         '🎲 *Попытать удачу*\n\n'
-        'Бросьте кубик (раз в 24 часа)\n'
-        '🎁 Выпадет *4 или 5*, бонусная сборка (+1 к лимиту)\n'
-        '⭐️ Выпадет *6*, активация *подписки Pro* на 30 дней\n'
-        '💨 Выпадет *от 1 до 3*, без приза'
+        'Бросьте кубик (раз в 24 часа):\n'
+        '🎁 Выпадет *4 или 5:* бонусная сборка (+1 к лимиту)\n'
+        '⭐️ Выпадет *6:* активация *подписки Pro* на 30 дней\n'
+        '💨 Выпадет *от 1 до 3:* без приза'
     )
     await render(cb, text, Keyboard.dice(), photo=IMG_DICE)
 
@@ -413,7 +413,6 @@ async def instruction(cb):
     await render(cb, Text.HELP, Keyboard.back(), photo=IMG_HELP)
 
 
-# -- >> Entry << --
 async def run():
     proxies = urllib.request.getproxies()
     proxy = proxies.get('https') or proxies.get('http')

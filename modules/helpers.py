@@ -99,7 +99,7 @@ def listing(uid):
     if not items:
         return Text.FILES
     names = '\n'.join(f'{i}. `{x.title}`' for i, x in enumerate(items, 1))
-    return f"📥 *Получено файлов ({len(items)})*\n\n{names}\n\n📎 Отправьте ещё или нажмите *'Готово'*."
+    return f"📥 *Получено файлов ({len(items)}):*\n\n{names}\n\n📎 Отправьте ещё или нажмите *'Готово'*."
 
 
 async def sync(msg, bot, uid):
