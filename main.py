@@ -26,9 +26,24 @@ router = Router()
 Storage.load()
 
 
+# -- >> Helpers << --
+async def grant_ref_reward(bot, u):
+    if not u.ref_by or u.ref_rewarded:
+        return
+    u.ref_rewarded = True
+    inviter = profile(u.ref_by)
+    inviter.invited += 1
+    inviter.ref_rewards += 1
+    Storage.save()
+    try:
+        await bot.send_message(inviter.uid, Text.REF_NEW, reply_markup=Keyboard.ref_reward())
+    except Exception:
+        pass
+
+
 # -- >> Handlers << --
 @router.message(CommandStart())
-async def start(msg, state):
+async def start(msg, state, bot):
     await state.clear()
     uid = msg.from_user.id
     msgs.pop(uid, None)
@@ -37,11 +52,8 @@ async def start(msg, state):
     args = msg.text.split(maxsplit=1)
     if len(args) > 1 and args[1].startswith('ref_'):
         ref = args[1][4:]
-        if ref.isdigit() and int(ref) != uid and not u.ref_by:
+        if ref.isdigit() and int(ref) != uid and not u.ref_by and not u.registered():
             u.ref_by = int(ref)
-            inviter = profile(int(ref))
-            inviter.invited += 1
-            inviter.used = max(0, inviter.used - 2)
             Storage.save()
 
     if not u.registered():
@@ -52,7 +64,7 @@ async def start(msg, state):
 
 
 @router.callback_query(Flow.reg_name, F.data == 'not_student')
-async def not_student(cb, state):
+async def not_student(cb, state, bot):
     u = profile(cb.from_user.id)
     u.is_student = False
     u.name = cb.from_user.first_name or 'Пользователь'
@@ -61,6 +73,7 @@ async def not_student(cb, state):
     Storage.save()
     await state.clear()
     await cb.answer('✅ Выбран режим личного использования')
+    await grant_ref_reward(bot, u)
     await render(cb, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
@@ -85,24 +98,26 @@ async def enroll(msg, state):
 
 
 @router.callback_query(Flow.reg_group, F.data == 'skip_group')
-async def omit(cb, state):
+async def omit(cb, state, bot):
     u = profile(cb.from_user.id)
     u.group = 'Группа'
     if u.name_tpl == '{subject}':
         u.name_tpl = '{name}_{group}_{subject}'
     Storage.save()
     await state.clear()
+    await grant_ref_reward(bot, u)
     await render(cb, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
 @router.message(Flow.reg_group)
-async def assign(msg, state):
+async def assign(msg, state, bot):
     u = profile(msg.from_user.id)
     u.group = msg.text.strip()
     if u.name_tpl == '{subject}':
         u.name_tpl = '{name}_{group}_{subject}'
     Storage.save()
     await state.clear()
+    await grant_ref_reward(bot, u)
     await render(msg, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
@@ -222,7 +237,59 @@ async def regroup(msg, state):
 async def invite(cb, bot):
     u = profile(cb.from_user.id)
     me = await bot.get_me()
-    await render(cb, Text.invite(me.username, u.uid, u.invited), Keyboard.back(), photo=IMG_REF)
+    await render(
+        cb,
+        Text.invite(me.username, u.uid, u.invited, u.ref_rewards),
+        Keyboard.invite(u.ref_rewards),
+        photo=IMG_REF
+    )
+
+
+@router.callback_query(F.data == 'ref_rewards')
+async def ref_rewards(cb):
+    u = profile(cb.from_user.id)
+    if u.ref_rewards <= 0:
+        await cb.answer(Text.REF_EMPTY, show_alert=True)
+        return
+    await render(cb, Text.ref_rewards(u.ref_rewards), Keyboard.ref_reward(from_invite=True))
+
+
+@router.callback_query(F.data == 'defer_ref_reward')
+async def defer_ref_reward(cb):
+    await cb.answer()
+    await render(cb, Text.REF_DEFERRED, Keyboard.main())
+
+
+@router.callback_query(F.data == 'claim_ref_packs')
+async def claim_ref_packs(cb):
+    u = profile(cb.from_user.id)
+    if u.ref_rewards <= 0:
+        await cb.answer(Text.REF_EMPTY, show_alert=True)
+        return
+    u.ref_rewards -= 1
+    u.used = max(0, u.used - 2)
+    Storage.save()
+    await cb.answer('✅ Начислено +2 сборки!', show_alert=True)
+    if u.ref_rewards > 0:
+        await render(cb, Text.ref_rewards(u.ref_rewards), Keyboard.ref_reward(from_invite=True))
+    else:
+        await render(cb, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
+
+
+@router.callback_query(F.data == 'claim_ref_pro')
+async def claim_ref_pro(cb):
+    uid = cb.from_user.id
+    u = profile(uid)
+    if u.ref_rewards <= 0:
+        await cb.answer(Text.REF_EMPTY, show_alert=True)
+        return
+    u.ref_rewards -= 1
+    upgrade(uid, days=3)
+    await cb.answer('⭐️ Начислено 3 дня подписки Pro!', show_alert=True)
+    if u.ref_rewards > 0:
+        await render(cb, Text.ref_rewards(u.ref_rewards), Keyboard.ref_reward(from_invite=True))
+    else:
+        await render(cb, Text.dashboard(u), Keyboard.main(), photo=IMG_MENU)
 
 
 @router.callback_query(F.data == 'dice')

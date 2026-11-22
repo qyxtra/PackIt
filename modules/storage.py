@@ -19,6 +19,8 @@ class Student:
         history=None,
         invited=0,
         ref_by=None,
+        ref_rewards=0,
+        ref_rewarded=False,
         last_dice=0,
         name_tpl='{name}_{group}_{subject}',
         readme=True,
@@ -34,6 +36,8 @@ class Student:
         self.history = history if history is not None else []
         self.invited = invited
         self.ref_by = ref_by
+        self.ref_rewards = ref_rewards
+        self.ref_rewarded = ref_rewarded
         self.last_dice = last_dice
         self.name_tpl = name_tpl
         self.readme = readme
@@ -96,6 +100,8 @@ class Student:
             'history': self.history,
             'invited': self.invited,
             'ref_by': self.ref_by,
+            'ref_rewards': self.ref_rewards,
+            'ref_rewarded': self.ref_rewarded,
             'last_dice': self.last_dice,
             'name_tpl': self.name_tpl,
             'readme': self.readme,
@@ -124,6 +130,8 @@ class Storage:
                 data.get('history', []),
                 data.get('invited', 0),
                 data.get('ref_by'),
+                data.get('ref_rewards', 0),
+                data.get('ref_rewarded', False),
                 data.get('last_dice', 0),
                 data.get('name_tpl', '{name}_{group}_{subject}'),
                 data.get('readme', True),

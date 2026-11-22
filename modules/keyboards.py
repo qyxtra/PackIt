@@ -52,7 +52,7 @@ class Keyboard:
         for code, label, tpl in presets:
             mark = '✅ ' if tpl == u.name_tpl else ''
             rows.append([InlineKeyboardButton(text=f'{mark}{label}', callback_data=f'tpl_{code}')])
-        readme_btn = '📄 README.txt в ZIP: Вкл ✅' if u.readme else '📄 README.txt в ZIP: Выкл ❌'
+        readme_btn = '📄 README.txt в ZIP, Вкл ✅' if u.readme else '📄 README.txt в ZIP, Выкл ❌'
         rows.append([InlineKeyboardButton(text=readme_btn, callback_data='toggle_readme')])
         rows.append([InlineKeyboardButton(text='🔄 Пройти регистрацию заново', callback_data='re_register')])
         rows.append([InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')])
@@ -184,6 +184,26 @@ class Keyboard:
             [InlineKeyboardButton(text='🎲 Бросить кубик', callback_data='roll_dice')],
             [InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')]
         ])
+
+    @staticmethod
+    def invite(rewards=0):
+        rows = []
+        if rewards > 0:
+            rows.append([InlineKeyboardButton(text=f'🎁 Доступные награды ({rewards})', callback_data='ref_rewards')])
+        rows.append([InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')])
+        return InlineKeyboardMarkup(inline_keyboard=rows)
+
+    @staticmethod
+    def ref_reward(from_invite=False):
+        rows = [
+            [InlineKeyboardButton(text='📦 +2 сборки', callback_data='claim_ref_packs')],
+            [InlineKeyboardButton(text='⭐️ 3 дня подписки Pro', callback_data='claim_ref_pro')]
+        ]
+        if from_invite:
+            rows.append([InlineKeyboardButton(text='🔙 Назад', callback_data='invite')])
+        else:
+            rows.append([InlineKeyboardButton(text='⏳ Оставить на потом', callback_data='defer_ref_reward')])
+        return InlineKeyboardMarkup(inline_keyboard=rows)
 
     @staticmethod
     def skip(target):
