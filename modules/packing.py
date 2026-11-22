@@ -212,28 +212,39 @@ async def subject(cb, state):
 
 @router.callback_query(Flow.subject, F.data == 'skip_subject_tpl')
 async def default_tpl(cb, state):
-    titles[cb.from_user.id] = ('Работа', True)
+    uid = cb.from_user.id
+    u = profile(uid)
+    u.refresh()
+    titles[uid] = ('Работа', True)
     await state.clear()
-    await render(cb, Text.FORMAT, Keyboard.format())
+    await render(cb, Text.FORMAT, Keyboard.format(u.pro))
 
 
 @router.callback_query(Flow.subject, F.data == 'skip_subject_raw')
 async def default_raw(cb, state):
-    titles[cb.from_user.id] = ('Работа', False)
+    uid = cb.from_user.id
+    u = profile(uid)
+    u.refresh()
+    titles[uid] = ('Работа', False)
     await state.clear()
-    await render(cb, Text.FORMAT, Keyboard.format())
+    await render(cb, Text.FORMAT, Keyboard.format(u.pro))
 
 
 @router.message(Flow.subject)
 async def choose(msg, state):
-    titles[msg.from_user.id] = (msg.text.strip(), True)
+    uid = msg.from_user.id
+    u = profile(uid)
+    u.refresh()
+    titles[uid] = (msg.text.strip(), True)
     await state.clear()
-    await msg.answer(Text.FORMAT, reply_markup=Keyboard.format())
+    await msg.answer(Text.FORMAT, reply_markup=Keyboard.format(u.pro))
 
 
 @router.callback_query(F.data == 'choose_format')
 async def select(cb):
-    await render(cb, Text.FORMAT, Keyboard.format())
+    u = profile(cb.from_user.id)
+    u.refresh()
+    await render(cb, Text.FORMAT, Keyboard.format(u.pro))
 
 
 @router.callback_query(F.data == 'make_zip')
@@ -261,11 +272,6 @@ async def archive(cb):
     if os.path.exists(out):
         os.remove(out)
     cleanup(uid)
-
-
-@router.callback_query(F.data == 'make_doc_soon')
-async def report_soon(cb):
-    await cb.answer(Text.WORD_SOON, show_alert=True)
 
 
 @router.callback_query(F.data == 'make_doc')

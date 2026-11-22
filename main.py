@@ -307,7 +307,7 @@ async def rub(cb):
     await cb.message.edit_reply_markup(reply_markup=None)
     await cb.message.answer('🎉')
     if drafts.get(uid):
-        await cb.message.answer(Text.PAID_DRAFT, reply_markup=Keyboard.format())
+        await cb.message.answer(Text.PAID_DRAFT, reply_markup=Keyboard.format(True))
     else:
         await cb.message.answer(Text.PAID, reply_markup=Keyboard.main())
 
@@ -317,7 +317,7 @@ async def stars(cb):
     await cb.answer()
     await cb.message.answer_invoice(
         title='⭐️ Подписка Pro (1 месяц)',
-        description='⚡️ Безлимитные сборки и доступ к новым функциям (скоро - автогенерация отчетов в Word .docx).',
+        description='⚡️ Безлимитные сборки и автогенерация отчетов в Word (.docx) с титульным листом.',
         payload='pro_monthly_stars',
         provider_token='',
         currency='XTR',
@@ -336,7 +336,7 @@ async def paid(msg: Message):
     upgrade(uid)
     await msg.answer('🎉')
     if drafts.get(uid):
-        await msg.answer(Text.PAID_DRAFT, reply_markup=Keyboard.format())
+        await msg.answer(Text.PAID_DRAFT, reply_markup=Keyboard.format(True))
     else:
         await msg.answer(Text.PAID, reply_markup=Keyboard.main())
 
