@@ -144,7 +144,7 @@ class Keyboard:
     def format():
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text='📁 ZIP-архив (Бесплатно)', callback_data='make_zip')],
-            [InlineKeyboardButton(text='📄 Отчет Word .docx (Pro)', callback_data='make_doc')],
+            [InlineKeyboardButton(text='🔒 Отчет Word .docx (Pro, скоро)', callback_data='make_doc_soon')],
             [InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')]
         ])
 

@@ -263,6 +263,11 @@ async def archive(cb):
     cleanup(uid)
 
 
+@router.callback_query(F.data == 'make_doc_soon')
+async def report_soon(cb):
+    await cb.answer(Text.WORD_SOON, show_alert=True)
+
+
 @router.callback_query(F.data == 'make_doc')
 async def report(cb):
     uid = cb.from_user.id
