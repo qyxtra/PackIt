@@ -142,9 +142,10 @@ class Keyboard:
 
     @staticmethod
     def format():
+        strike = '\u0336'.join('Отчет Word .docx (Pro)') + '\u0336'
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text='📁 ZIP-архив (Бесплатно)', callback_data='make_zip')],
-            [InlineKeyboardButton(text='🔒 Отчет Word .docx (Pro, скоро)', callback_data='make_doc_soon')],
+            [InlineKeyboardButton(text=f'📄 {strike}', callback_data='make_doc_soon')],
             [InlineKeyboardButton(text='⬅️ В главное меню', callback_data='menu')]
         ])
 
